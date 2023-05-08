@@ -1,9 +1,11 @@
 const express = require('express');
+const multer = require('multer');
 const cityController = require('../controllers/cityController');
 const cityCacheController = require('../controllers/cityCacheController');
 const authController = require('../controllers/authController');
 const City = require('../models/City');
 
+const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
 router.route('/search').get(
@@ -20,6 +22,16 @@ router
     authController.protect,
     authController.restrictToRoles('MAIN_ADMIN'),
     cityController.toggleCityFeatured
+  );
+
+router
+  .route('/:cityId')
+  .patch(
+    authController.protect,
+    authController.restrictToRoles('MAIN_ADMIN'),
+    upload.single('photo'),
+    cityController.resizeCityPhoto,
+    cityController.updateCity
   );
 
 router.get('/modify/', async (req, res) => {

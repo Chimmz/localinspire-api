@@ -12,6 +12,12 @@ const citySchema = new mongoose.Schema(
     density: String,
     zips: String,
 
+    price: {
+      amount: { type: Number, default: 0.0 },
+      currency: String,
+      stripePriceId: String,
+      stripePriceNickname: String,
+    },
     imgUrl: { type: String, default: '/img/default-city-img.png' }, // This default img exists in the frontend
     isFeatured: { type: Boolean, default: false },
     searchesCount: { type: Number, default: 0 },
