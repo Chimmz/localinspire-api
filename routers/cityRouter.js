@@ -8,12 +8,12 @@ const City = require('../models/City');
 const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
+router.route('/').get(cityController.getCities);
 router.route('/search').get(
   // cityCacheController.searchCachedCities,
   cityController.searchCities
 );
 
-router.route('/').get(cityController.getAllCities);
 router.route('/all-states').get(cityController.getStateNames);
 
 router
@@ -34,6 +34,7 @@ router
     cityController.updateCity
   );
 
+////////// TEST ///////////
 router.get('/modify/', async (req, res) => {
   const cities = await City.find({});
   res.json(cities);

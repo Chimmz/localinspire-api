@@ -59,6 +59,39 @@ const { toTitleCase } = require('../utils/string-utils');
 //   }
 // };
 
+exports.getCities = async (req, res) => {
+  // const { page = 1, limit = 20 } = req.query;
+
+  if (!req.query.page) req.query.page = 1;
+  if (!req.query.limit) req.query.limit = 20;
+  if (req.query.isFeatured === 'true') req.query.isFeatured = true;
+  else if (req.query.isFeatured === 'false') req.query.isFeatured = false;
+
+  const { page, limit } = req.query;
+  const skip = limit * (page - 1);
+  // const skip = (req.query.limit || 20) * ((req.query.page || 1) - 1);
+
+  try {
+    const [total, cities] = await Promise.all([
+      City.find().count(),
+      City.find(req.query).skip(skip).limit(limit),
+    ]);
+    res.status(200).json({
+      status: 'SUCCESS',
+      results: cities.length,
+      total,
+      cities,
+    });
+  } catch (err) {
+    console.log('Error: ', err);
+
+    res.status(500).json({
+      status: 'ERROR',
+      msg: err.message,
+    });
+  }
+};
+
 exports.searchCities = async (req, res, next) => {
   try {
     const [nameQuery, stateCodeQuery] = req.query.textQuery.split('-');
@@ -81,25 +114,6 @@ exports.searchCities = async (req, res, next) => {
   } catch (err) {
     console.log(err);
     res.status(400).json({ error: err.message });
-  }
-};
-
-exports.getAllCities = async (req, res) => {
-  const { page = 1, limit = 20 } = req.query;
-  const skip = limit * (page - 1);
-  try {
-    const [total, cities] = await Promise.all([
-      City.find().count(),
-      City.find().skip(skip).limit(limit),
-    ]);
-    res.status(200).json({ status: 'SUCCESS', cities, total });
-  } catch (err) {
-    console.log('Error: ', err);
-
-    res.status(500).json({
-      status: 'ERROR',
-      msg: err.message,
-    });
   }
 };
 
@@ -135,7 +149,7 @@ exports.resizeCityPhoto = async (req, res, next) => {
     if (!req.file.mimetype.startsWith('image'))
       return res.status(400).json({
         status: 'FAIL',
-        msg: `Uploaded file of type ${req.file.mimeType} is not an image`,
+        msg: `Uploaded file of type ${req.file.mimetype} is not an image`,
       });
 
     // Store image in filesystem
@@ -235,3 +249,14 @@ exports.updateCity = async (req, res) => {
     res.status(400).json({ status: '400', error: err.message });
   }
 };
+
+
+// exports.increaseTotalCitySearches = async (req, res) => {
+//   const { cityName, stateCode } = req.query;
+
+//   const city = await City.find({
+//     name: { $regex: `^${cityName.trim()}`, $options: 'i' },
+//     stateCode: stateCode.toUpperCase(),
+//   }).select('searchesCount');
+//   res.json(city);
+// };
