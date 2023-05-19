@@ -417,7 +417,7 @@ exports.stripePaymentWebhookHandler = async (req, res) => {
 
 exports.getBusinessClaimCheckoutSession = async (req, res) => {
   try {
-    const returnUrl = req.query.returnUrl;
+    const { returnUrl, cancelUrl } = req.query;
     const prices = await stripe.prices.list({ expand: ['data.product'] });
     const foundStripePrice = prices.data.find(pr => pr.id === req.query.priceId);
 
@@ -463,11 +463,11 @@ exports.getBusinessClaimCheckoutSession = async (req, res) => {
       client_reference_id: req.params.id,
       customer: req.user._id,
       customer_email: req.user.email,
-      success_url: frontendUrl[process.env.NODE_ENV].concat(returnUrl || ''),
-      // cancel_url: `${req.protocol}://${req.get(hostname)}/payment-cancelled`,
+      success_url: frontendUrl[process.env.NODE_ENV].concat(returnUrl),
+      cancel_url: cancelUrl ? frontendUrl[process.env.NODE_ENV].concat(cancelUrl) : undefined,
     });
 
-    console.log('Stripe checkout session: ', session);
+    console.log('New stripe checkout session: ', session);
 
     res.status(200).json({ status: 'SUCCESS', session });
   } catch (err) {
