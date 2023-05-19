@@ -94,13 +94,26 @@ exports.getCities = async (req, res) => {
 
 exports.searchCities = async (req, res, next) => {
   try {
+    if (!req.query.textQuery) return res.status(200).json({ total: 0, cities: [] });
+
     const [nameQuery, stateCodeQuery] = req.query.textQuery.split('-');
     const filter = {};
 
     if (nameQuery) filter.name = { $regex: `^${toTitleCase(nameQuery.trim())}` };
-
     if (stateCodeQuery)
       filter.stateCode = { $regex: `^${stateCodeQuery.toUpperCase().trim()}` };
+
+    if (req.query.populate === 'true') {
+      let cities = await City.find(filter);
+
+      // If no match for city name, find matches with state name
+      if (!cities.length)
+        cities = await City.find({
+          stateName: { $regex: `^${toTitleCase(nameQuery.trim())}` },
+        });
+
+      return res.status(200).json({ status: 'SUCCESS', total: cities.length, cities });
+    }
 
     const [result] = await City.aggregate([
       { $match: filter },
@@ -110,7 +123,11 @@ exports.searchCities = async (req, res, next) => {
       { $project: { _id: 0 } },
     ]);
 
-    res.status(200).json({ results: result.cities?.length, cities: result.cities });
+    res.status(200).json({
+      status: 'SUCCESS',
+      total: result.cities?.length,
+      cities: result.cities,
+    });
   } catch (err) {
     console.log(err);
     res.status(400).json({ error: err.message });
@@ -249,7 +266,6 @@ exports.updateCity = async (req, res) => {
     res.status(400).json({ status: '400', error: err.message });
   }
 };
-
 
 // exports.increaseTotalCitySearches = async (req, res) => {
 //   const { cityName, stateCode } = req.query;

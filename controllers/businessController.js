@@ -295,7 +295,7 @@ exports.getBusinessClaim = async (req, res) => {
 
 exports.getBusinessUpgradePlans = async (req, res) => {
   try {
-    const data = await stripe.prices.list({ expand: ['data.product'] });
+    const data = await stripe.prices.list(); // Can add { expand: ['data.product'] }
     res.json({ status: 'SUCCESS', ...data });
   } catch (err) {
     console.log(err);
